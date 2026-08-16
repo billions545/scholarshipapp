@@ -1,0 +1,603 @@
+// Scholarship & International Education Application Platform
+// MVP schema. SQLite for local dev; string fields double as portable
+// "enums" (validated in app code via lib/enums.ts + zod) so switching the
+// datasource to postgresql later just means changing `provider` +
+// `DATABASE_URL` and optionally promoting these to real Prisma enums.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & RBAC
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          String // SUPER_ADMIN | ADMIN | ADMISSIONS_MANAGER | ADMISSIONS_OFFICER | DOCUMENT_REVIEWER | AGENT | STUDENT | PARTNER_ADMIN | PARTNER_REVIEWER
+  status        String   @default("ACTIVE") // ACTIVE | SUSPENDED | PENDING_VERIFICATION
+  emailVerified Boolean  @default(false)
+  referralCode  String?  @unique // set on AGENT users; resolves /apply?ref=<code> attribution (PRD §68-69)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studentProfile      StudentProfile?      @relation("UserStudentProfile")
+  advisedStudents      StudentProfile[]     @relation("AdviserStudents")
+  referredStudents      StudentProfile[]     @relation("AgentReferrals")
+  assignedApplications Application[]        @relation("AdviserApplications")
+  documentReviews       DocumentVersion[]    @relation("ReviewerVersions")
+  applicationEvents     ApplicationEvent[]   @relation("ActorEvents")
+  notesAuthored          Note[]               @relation("NoteAuthor")
+  auditLogs              AuditLog[]           @relation("AuditActor")
+  agentCommissions       Commission[]         @relation("AgentCommissions")
+  approvedCommissions    Commission[]         @relation("CommissionApprover")
+
+  @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// Student profile
+// ---------------------------------------------------------------------------
+
+model StudentProfile {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation("UserStudentProfile", fields: [userId], references: [id])
+
+  dateOfBirth        DateTime?
+  gender             String?
+  nationality         String?
+  countryOfResidence String?
+  state              String?
+  address            String?
+  preferredContact   String? // EMAIL | PHONE | WHATSAPP
+
+  passportNumber     String?
+  passportExpiry     DateTime?
+
+  // Study preferences (section 20)
+  preferredCountry    String?
+  preferredDegreeLevel String?
+  preferredField        String?
+  preferredIntake       String?
+  budget                 Int? // minor units
+  budgetCurrency         String? @default("NGN")
+  willingToRelocate     Boolean?
+
+  // Attribution (sections 6, 47, 69) — locked once set, survives lifecycle
+  acquisitionSource String? // WEBSITE | FACEBOOK | INSTAGRAM | WHATSAPP | AGENT | REFERRAL | ADVERTISEMENT | EVENT | UNIVERSITY | ORGANIC_SEARCH | OTHER
+  referralCode       String?
+  agentId              String?
+  agent                User?    @relation("AgentReferrals", fields: [agentId], references: [id])
+  referredAt          DateTime?
+
+  assignedAdviserId String?
+  assignedAdviser    User?   @relation("AdviserStudents", fields: [assignedAdviserId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academicRecords  AcademicRecord[]
+  workExperiences  WorkExperience[]
+  applications      Application[]
+  documents          Document[]
+  notes              Note[]            @relation("NoteStudent")
+  invoices           Invoice[]
+  payments           Payment[]
+  commissions        Commission[]
+
+  @@index([assignedAdviserId])
+  @@index([agentId])
+}
+
+model AcademicRecord {
+  id               String   @id @default(uuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  level          String // SECONDARY | DIPLOMA | HND | BACHELOR | MASTER | PHD | PROFESSIONAL_CERTIFICATE
+  institution     String
+  programme       String?
+  fieldOfStudy   String?
+  graduationDate DateTime?
+  gpa             Float?
+  gradingScale   String?
+  classDivision   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([studentProfileId])
+}
+
+model WorkExperience {
+  id               String   @id @default(uuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  employer    String
+  position    String
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+  industry    String?
+  isCurrent   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([studentProfileId])
+}
+
+// ---------------------------------------------------------------------------
+// Partners / Universities / Programmes / Opportunities
+// ---------------------------------------------------------------------------
+
+model Partner {
+  id           String   @id @default(uuid())
+  name         String
+  type         String // UNIVERSITY | SCHOLARSHIP_PROVIDER | EDUCATION_PLATFORM | AGENCY | GOVERNMENT | FOUNDATION | OTHER
+  country      String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  description  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  universities     University[]
+  commissionRules CommissionRule[]
+  commissions      Commission[]     @relation("CommissionPartner")
+}
+
+model University {
+  id        String  @id @default(uuid())
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  name    String
+  country String?
+  city    String?
+  website String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programmes Programme[]
+
+  @@index([partnerId])
+}
+
+model Programme {
+  id           String     @id @default(uuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  name          String
+  degreeLevel   String // DIPLOMA | BACHELOR | MASTER | PHD | PROFESSIONAL | CERTIFICATE
+  fieldOfStudy String?
+  studyMode    String? // ON_CAMPUS | ONLINE | HYBRID
+  durationMonths Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  opportunities Opportunity[]
+
+  @@index([universityId])
+}
+
+model Opportunity {
+  id           String    @id @default(uuid())
+  programmeId String
+  programme   Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+
+  slug  String @unique
+  title String
+  type  String // SCHOLARSHIP | UNIVERSITY_PROGRAMME | TUITION_DISCOUNT | FELLOWSHIP | GRANT | ONLINE_DEGREE | ON_CAMPUS_PROGRAMME | PROFESSIONAL_PROGRAMME | OTHER
+  category String? // FULLY_FUNDED | PARTIALLY_FUNDED | MERIT_BASED | NEED_BASED | SPORTS | RESEARCH | GOVERNMENT | UNIVERSITY | PRIVATE_FOUNDATION | INTERNATIONAL
+
+  country String?
+  city    String?
+
+  description                   String?
+  benefits                       String?
+  applicationProcessDescription String?
+
+  tuitionAmount        Int? // minor units
+  tuitionCurrency       String? @default("NGN")
+  applicationFeeAmount Int?
+  applicationFeeCurrency String? @default("NGN")
+  scholarshipAmount     Int?
+  scholarshipPercentage Int?
+  serviceFeeAmount       Int? // agency's own administration fee (section 4.1, 154)
+  serviceFeeCurrency     String? @default("NGN")
+
+  languageRequirement String?
+
+  deadline               DateTime?
+  intake                   String?
+  estimatedProcessingDays Int?
+
+  status      String    @default("DRAFT") // DRAFT | REVIEW | PUBLISHED | EXPIRED | ARCHIVED
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  eligibilityRules     EligibilityRule[]
+  documentRequirements DocumentRequirement[]
+  applications           Application[]
+  commissionRules        CommissionRule[]
+
+  @@index([status])
+  @@index([type])
+  @@index([country])
+}
+
+model EligibilityRule {
+  id           String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  field    String // e.g. gpa | nationality | countryOfResidence | qualificationLevel | englishTestScore
+  operator String // EQUALS | NOT_EQUALS | GREATER_THAN | GREATER_THAN_OR_EQUAL | LESS_THAN | LESS_THAN_OR_EQUAL | IN | NOT_IN | CONTAINS | EXISTS
+  value    String // raw value; IN/NOT_IN store comma-separated values
+  label    String // human-readable requirement, e.g. "Bachelor's degree required"
+  required Boolean @default(true) // false => informational / contributes to POTENTIALLY_ELIGIBLE only
+
+  createdAt DateTime @default(now())
+
+  @@index([opportunityId])
+}
+
+model DocumentRequirement {
+  id           String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  documentType        String // PASSPORT | NATIONAL_ID | DEGREE_CERTIFICATE | TRANSCRIPT | CV | MOTIVATION_LETTER | STATEMENT_OF_PURPOSE | RECOMMENDATION_LETTER | ENGLISH_TEST | FINANCIAL_DOCUMENT | BANK_STATEMENT | EMPLOYMENT_LETTER | PORTFOLIO | PHOTO | OTHER
+  required             Boolean @default(true)
+  conditional           Boolean @default(false)
+  conditionDescription String?
+
+  createdAt DateTime @default(now())
+
+  @@index([opportunityId])
+}
+
+// ---------------------------------------------------------------------------
+// Applications
+// ---------------------------------------------------------------------------
+
+model Application {
+  id                String @id @default(uuid())
+  applicationNumber String @unique
+
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+
+  status String @default("DRAFT")
+  // DRAFT | PAYMENT_REQUIRED | PAYMENT_CONFIRMED | DOCUMENTS_REQUIRED |
+  // DOCUMENT_REVIEW | CORRECTION_REQUIRED | READY_FOR_SUBMISSION |
+  // SUBMITTED | PARTNER_REVIEW | ADMISSION_DECISION | OFFER_RECEIVED |
+  // OFFER_ACCEPTED | ENROLMENT_PENDING | ENROLLED |
+  // REJECTED | WITHDRAWN | CANCELLED
+
+  assignedAdviserId String?
+  assignedAdviser   User?   @relation("AdviserApplications", fields: [assignedAdviserId], references: [id])
+
+  eligibilityResult   String? // ELIGIBLE | POTENTIALLY_ELIGIBLE | NOT_ELIGIBLE
+  eligibilitySnapshot String? // JSON string of evaluated rules at creation time
+
+  partnerApplicationId  String?
+  partnerReference        String?
+  externalApplicationUrl String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  submittedAt DateTime?
+
+  tasks       ApplicationTask[]
+  events      ApplicationEvent[]
+  documents   Document[]
+  notes       Note[]             @relation("NoteApplication")
+  invoices    Invoice[]
+  payments    Payment[]
+  commissions Commission[]
+
+  @@index([studentId])
+  @@index([opportunityId])
+  @@index([status])
+  @@index([assignedAdviserId])
+}
+
+model ApplicationTask {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status       String  @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | BLOCKED
+  assigneeRole String // STUDENT | ADVISER | REVIEWER | ADMIN
+  priority     String  @default("NORMAL") // LOW | NORMAL | HIGH
+  dueDate       DateTime?
+  completedAt DateTime?
+
+  documentType String? // links task back to a DocumentRequirement.documentType when applicable
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([status])
+}
+
+model ApplicationEvent {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  type    String // APPLICATION_CREATED | ELIGIBILITY_COMPLETED | DOCUMENT_UPLOADED | DOCUMENT_APPROVED | DOCUMENT_REJECTED | STATUS_CHANGED | SUBMITTED | NOTE_ADDED | PARTNER_UPDATE
+  message String
+  metadata String? // JSON string
+
+  actorUserId String?
+  actor       User?   @relation("ActorEvents", fields: [actorUserId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+}
+
+// ---------------------------------------------------------------------------
+// Documents
+// ---------------------------------------------------------------------------
+
+model Document {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+
+  documentType String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions DocumentVersion[]
+
+  @@unique([applicationId, documentType])
+  @@index([applicationId])
+  @@index([studentId])
+}
+
+model DocumentVersion {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  versionNumber Int
+  fileName       String
+  storagePath   String
+  mimeType       String
+  fileSize       Int
+
+  status         String  @default("UPLOADED") // UPLOADED | UNDER_REVIEW | APPROVED | REJECTED | CORRECTION_REQUIRED | SUPERSEDED | EXPIRED
+  reviewedById   String?
+  reviewedBy     User?   @relation("ReviewerVersions", fields: [reviewedById], references: [id])
+  reviewedAt     DateTime?
+  reviewComment String?
+
+  uploadedAt DateTime @default(now())
+
+  @@index([documentId])
+}
+
+// ---------------------------------------------------------------------------
+// Notes / messages, audit log
+// ---------------------------------------------------------------------------
+
+model Note {
+  id            String @id @default(uuid())
+  type          String // INTERNAL_NOTE | STUDENT_MESSAGE | SYSTEM_EVENT
+  content       String
+
+  applicationId String?
+  application   Application? @relation("NoteApplication", fields: [applicationId], references: [id], onDelete: Cascade)
+
+  studentId String?
+  student   StudentProfile? @relation("NoteStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?  @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+  @@index([studentId])
+}
+
+model AuditLog {
+  id       String  @id @default(uuid())
+  actorId String?
+  actor    User?   @relation("AuditActor", fields: [actorId], references: [id])
+
+  action       String
+  resourceType String
+  resourceId   String
+  oldValue     String?
+  newValue     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+}
+
+// ---------------------------------------------------------------------------
+// Payments (PRD §39-43). Money in integer minor units throughout.
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id            String @id @default(uuid())
+  invoiceNumber String @unique
+
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id])
+
+  description String
+  type        String // APPLICATION_FEE | ADMINISTRATION_FEE | DOCUMENT_REVIEW | PREMIUM_SERVICE | TEST_FEE | VISA_SUPPORT | OTHER_SERVICE
+  amount      Int // minor units
+  currency    String @default("NGN")
+  status      String @default("UNPAID") // UNPAID | PAID | VOID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([studentId])
+  @@index([applicationId])
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id])
+
+  type     String // APPLICATION_FEE | ADMINISTRATION_FEE | DOCUMENT_REVIEW | PREMIUM_SERVICE | TEST_FEE | VISA_SUPPORT | OTHER_SERVICE
+  amount   Int // minor units
+  currency String @default("NGN")
+
+  provider          String // MOCK | PAYSTACK | MONNIFY
+  providerReference String @unique
+
+  status String    @default("PENDING") // PENDING | SUCCESSFUL | FAILED
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refunds Refund[]
+
+  @@index([studentId])
+  @@index([applicationId])
+  @@index([invoiceId])
+}
+
+model Refund {
+  id String @id @default(uuid())
+
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id])
+
+  amount Int // minor units
+  reason String?
+
+  status String @default("REFUND_REQUESTED") // REFUND_REQUESTED | REFUND_APPROVED | REFUND_PROCESSING | REFUNDED | REFUND_REJECTED
+
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([paymentId])
+}
+
+// ---------------------------------------------------------------------------
+// Commission engine (PRD §44-48)
+// ---------------------------------------------------------------------------
+
+model CommissionRule {
+  id        String  @id @default(uuid())
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  // Scope to one opportunity, or leave null to apply to every opportunity
+  // under this partner.
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  triggerEvent String // APPLICATION_SUBMITTED | STUDENT_ADMITTED | STUDENT_ENROLLED
+
+  amountType String // FIXED | PERCENTAGE
+  fixedAmount Int? // minor units, used when amountType = FIXED
+  percentage Int? // 0-100, used when amountType = PERCENTAGE
+  percentageBasis String? // TUITION | SERVICE_FEE — what the percentage is taken of
+
+  agentSharePercentage Int @default(0) // 0-100, portion of the commission passed to the referring agent
+  active               Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  commissions Commission[]
+
+  @@index([partnerId])
+  @@index([opportunityId])
+}
+
+model Commission {
+  id String @id @default(uuid())
+
+  partnerId String
+  partner   Partner @relation("CommissionPartner", fields: [partnerId], references: [id])
+
+  ruleId String?
+  rule   CommissionRule? @relation(fields: [ruleId], references: [id])
+
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  agentId String?
+  agent   User?   @relation("AgentCommissions", fields: [agentId], references: [id])
+
+  triggerEvent String // what fired this commission, e.g. STUDENT_ENROLLED
+  amount       Int // total commission, minor units
+  agentShare   Int @default(0) // portion of `amount` payable to the agent, minor units
+  currency     String @default("NGN")
+
+  status String @default("EXPECTED") // EXPECTED | PENDING | ELIGIBLE | APPROVED | INVOICED | PAID | REJECTED | CANCELLED
+
+  expectedDate DateTime?
+  approvedAt   DateTime?
+  approvedById String?
+  approvedBy   User?     @relation("CommissionApprover", fields: [approvedById], references: [id])
+  paidAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([partnerId])
+  @@index([studentId])
+  @@index([applicationId])
+  @@index([agentId])
+  @@index([status])
+}
