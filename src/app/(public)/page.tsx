@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { ui } from "@/lib/ui";
 import { OpportunityCard } from "@/components/opportunity-card";
+import { HeroCarousel, type HeroSlide } from "@/components/hero-carousel";
 import {
   SearchIcon,
   CheckCircleIcon,
@@ -13,6 +14,13 @@ import {
   GlobeIcon,
   SparkleIcon,
 } from "@/components/icons";
+
+const HERO_IMAGES = [
+  "/images/hero-graduation.jpg",
+  "/images/hero-campus.jpg",
+  "/images/graduation-caps.jpg",
+  "/images/library-students.jpg",
+];
 
 const HOW_IT_WORKS = [
   { icon: SearchIcon, title: "Discover", body: "Browse scholarships, university programmes and funded opportunities matched to you." },
@@ -36,26 +44,24 @@ export default async function HomePage() {
     ["100%", "Free to browse"],
   ] as const;
 
+  const heroSlides: HeroSlide[] = featured.map((opp, i) => ({
+    id: opp.id,
+    slug: opp.slug,
+    title: opp.title,
+    type: opp.type,
+    category: opp.category,
+    country: opp.country ?? opp.programme.university.country,
+    deadline: opp.deadline ? opp.deadline.toISOString() : null,
+    scholarshipPercentage: opp.scholarshipPercentage,
+    universityName: opp.programme.university.name,
+    image: HERO_IMAGES[i % HERO_IMAGES.length],
+  }));
+
   return (
     <>
       {/* Hero */}
       <section className="relative isolate overflow-hidden bg-slate-950">
-        <Image
-          src="/images/hero-graduation.jpg"
-          alt="Graduates celebrating at their university commencement"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-55"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/40 to-transparent" />
-
-        {/* decorative glow */}
-        <div className="pointer-events-none absolute -top-24 right-[-10%] h-96 w-96 animate-float-slow rounded-full bg-indigo-500/30 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-6xl px-6 pt-24 pb-32 sm:pt-32 sm:pb-40">
+        <HeroCarousel slides={heroSlides}>
           <div className="animate-fade-in-up max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
               <SparkleIcon className="h-3.5 w-3.5 text-amber-300" />
@@ -89,7 +95,7 @@ export default async function HomePage() {
               No hidden fees at browse time &middot; Real advisers &middot; Transparent status tracking
             </p>
           </div>
-        </div>
+        </HeroCarousel>
 
         {/* Stats bar, overlapping the hero/next-section seam */}
         <div className="relative mx-auto max-w-6xl px-6">

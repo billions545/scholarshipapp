@@ -99,3 +99,19 @@ export function SparkleIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function ChevronLeftIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M15 5.5L8.5 12l6.5 6.5" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M9 5.5L15.5 12 9 18.5" />
+    </svg>
+  );
+}
