@@ -1,16 +1,16 @@
 // Scholarship & International Education Application Platform
-// MVP schema. SQLite for local dev; string fields double as portable
-// "enums" (validated in app code via lib/enums.ts + zod) so switching the
-// datasource to postgresql later just means changing `provider` +
-// `DATABASE_URL` and optionally promoting these to real Prisma enums.
+// Production schema (Postgres/Supabase). String fields double as portable
+// "enums" (validated in app code via lib/enums.ts + zod) rather than native
+// Prisma enums, so this stays easy to evolve.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------
