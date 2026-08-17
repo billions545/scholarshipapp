@@ -4,6 +4,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Hostinger (like most non-Vercel hosts) puts the app behind a proxy, so
+  // the Host header isn't trusted by default — without this, every request
+  // fails with UntrustedHost before it reaches our own code.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
