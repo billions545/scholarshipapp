@@ -15,9 +15,16 @@ import {
   SparkleIcon,
 } from "@/components/icons";
 
-const HERO_IMAGES = [
+// Real campus photography per country, so each slide matches the
+// opportunity it represents. Falls back to a rotating pool of campus/
+// graduation shots for countries we don't have a dedicated photo for yet.
+const HERO_IMAGE_BY_COUNTRY: Record<string, string> = {
+  Germany: "/images/germany-campus.jpg",
+  "United Kingdom": "/images/uk-campus.jpg",
+  Canada: "/images/hero-campus.jpg",
+};
+const HERO_FALLBACK_IMAGES = [
   "/images/hero-graduation.jpg",
-  "/images/hero-campus.jpg",
   "/images/graduation-caps.jpg",
   "/images/library-students.jpg",
 ];
@@ -44,18 +51,23 @@ export default async function HomePage() {
     ["100%", "Free to browse"],
   ] as const;
 
-  const heroSlides: HeroSlide[] = featured.map((opp, i) => ({
-    id: opp.id,
-    slug: opp.slug,
-    title: opp.title,
-    type: opp.type,
-    category: opp.category,
-    country: opp.country ?? opp.programme.university.country,
-    deadline: opp.deadline ? opp.deadline.toISOString() : null,
-    scholarshipPercentage: opp.scholarshipPercentage,
-    universityName: opp.programme.university.name,
-    image: HERO_IMAGES[i % HERO_IMAGES.length],
-  }));
+  let fallbackIndex = 0;
+  const heroSlides: HeroSlide[] = featured.map((opp) => {
+    const country = opp.country ?? opp.programme.university.country;
+    const image = (country && HERO_IMAGE_BY_COUNTRY[country]) ?? HERO_FALLBACK_IMAGES[fallbackIndex++ % HERO_FALLBACK_IMAGES.length];
+    return {
+      id: opp.id,
+      slug: opp.slug,
+      title: opp.title,
+      type: opp.type,
+      category: opp.category,
+      country,
+      deadline: opp.deadline ? opp.deadline.toISOString() : null,
+      scholarshipPercentage: opp.scholarshipPercentage,
+      universityName: opp.programme.university.name,
+      image,
+    };
+  });
 
   return (
     <>
