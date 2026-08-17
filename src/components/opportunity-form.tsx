@@ -1,4 +1,5 @@
 import { ui } from "@/lib/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { OPPORTUNITY_TYPES, OPPORTUNITY_CATEGORIES, labelize } from "@/lib/enums";
 
 type ProgrammeOption = { id: string; name: string; universityName: string };
@@ -39,6 +40,8 @@ export function OpportunityForm({
 }) {
   const d = defaults ?? {};
   const deadlineValue = d.deadline ? new Date(d.deadline).toISOString().slice(0, 10) : "";
+  const naira = (minorUnits?: number | null) =>
+    minorUnits === null || minorUnits === undefined ? "" : minorUnits / 100;
 
   return (
     <form action={action} className={`${ui.card} flex flex-col gap-4`}>
@@ -119,25 +122,36 @@ export function OpportunityForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={ui.label}>Tuition (NGN minor units)</label>
-          <input className={ui.input} name="tuitionAmount" type="number" defaultValue={d.tuitionAmount ?? ""} />
+          <label className={ui.label}>Tuition (₦)</label>
+          <input
+            className={ui.input}
+            name="tuitionAmount"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={naira(d.tuitionAmount)}
+          />
         </div>
         <div>
-          <label className={ui.label}>Application fee (NGN minor units)</label>
+          <label className={ui.label}>Application fee (₦)</label>
           <input
             className={ui.input}
             name="applicationFeeAmount"
             type="number"
-            defaultValue={d.applicationFeeAmount ?? ""}
+            min={0}
+            step="0.01"
+            defaultValue={naira(d.applicationFeeAmount)}
           />
         </div>
         <div>
-          <label className={ui.label}>Scholarship amount (NGN minor units)</label>
+          <label className={ui.label}>Scholarship amount (₦)</label>
           <input
             className={ui.input}
             name="scholarshipAmount"
             type="number"
-            defaultValue={d.scholarshipAmount ?? ""}
+            min={0}
+            step="0.01"
+            defaultValue={naira(d.scholarshipAmount)}
           />
         </div>
         <div>
@@ -152,12 +166,14 @@ export function OpportunityForm({
           />
         </div>
         <div>
-          <label className={ui.label}>Agency service fee (NGN minor units)</label>
+          <label className={ui.label}>Administration fee (₦)</label>
           <input
             className={ui.input}
             name="serviceFeeAmount"
             type="number"
-            defaultValue={d.serviceFeeAmount ?? ""}
+            min={0}
+            step="0.01"
+            defaultValue={naira(d.serviceFeeAmount)}
           />
         </div>
         <div>
@@ -191,9 +207,9 @@ export function OpportunityForm({
         </div>
       </div>
 
-      <button type="submit" className={`${ui.btnPrimary} self-start`}>
+      <SubmitButton className="self-start" pendingText="Saving...">
         {submitLabel}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

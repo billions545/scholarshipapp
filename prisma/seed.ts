@@ -90,12 +90,12 @@ async function main() {
       category: "PARTIALLY_FUNDED",
       country: "Germany",
       city: "Cologne",
-      description: "A partially funded scholarship for outstanding international students entering the MSc Computer Science programme at Rheinland University.",
-      benefits: "50% tuition waiver, relocation support, and a dedicated academic mentor.",
+      description: "A near-fully funded scholarship for outstanding international students entering the MSc Computer Science programme at Rheinland University.",
+      benefits: "98% tuition waiver, relocation support, and a dedicated academic mentor.",
       applicationProcessDescription: "Complete your profile, pass the eligibility check, upload required documents, and submit for review by our admissions team.",
       tuitionAmount: 500000000,
       applicationFeeAmount: 5000000,
-      scholarshipPercentage: 50,
+      scholarshipPercentage: 98,
       serviceFeeAmount: 3500000,
       languageRequirement: "IELTS 6.5 or equivalent",
       deadline: new Date("2027-03-01"),
@@ -155,11 +155,11 @@ async function main() {
       country: "United Kingdom",
       city: "Manchester",
       description: "A merit-based tuition discount for students with strong secondary school results applying to our undergraduate Business Administration programme.",
-      benefits: "20% tuition discount for all three years, subject to maintaining good academic standing.",
+      benefits: "60% tuition discount for all three years, subject to maintaining good academic standing.",
       applicationProcessDescription: "Submit your application with secondary school results; our admissions team reviews within two weeks.",
       tuitionAmount: 300000000,
       applicationFeeAmount: 2500000,
-      scholarshipPercentage: 20,
+      scholarshipPercentage: 60,
       serviceFeeAmount: 2500000,
       languageRequirement: "IELTS 6.0 or equivalent",
       deadline: new Date("2027-05-15"),
@@ -193,7 +193,7 @@ async function main() {
     },
   });
 
-  // --- Partner 3: Aurora Online Institute (fully online, published as DRAFT to show workflow) ---
+  // --- Partner 3: Aurora Online Institute (fully online, fully-funded fellowship) ---
   const auroraPartner = await prisma.partner.create({
     data: { name: "Aurora Online Institute", type: "EDUCATION_PLATFORM", country: "Canada" },
   });
@@ -203,16 +203,51 @@ async function main() {
   const onlineMBA = await prisma.programme.create({
     data: { universityId: aurora.id, name: "Online MBA", degreeLevel: "MASTER", fieldOfStudy: "Business Administration", studyMode: "ONLINE", durationMonths: 18 },
   });
-  await prisma.opportunity.create({
+  const auroraFellowship = await prisma.opportunity.create({
     data: {
       programmeId: onlineMBA.id,
       slug: "aurora-online-mba-fellowship",
       title: "Aurora Online MBA Fellowship",
       type: "FELLOWSHIP",
-      category: "MERIT_BASED",
+      category: "FULLY_FUNDED",
       country: "Canada",
-      description: "A fellowship covering part of the tuition for working professionals pursuing an online MBA.",
-      status: "DRAFT",
+      description: "A fully funded fellowship covering 100% of tuition for working professionals pursuing an online MBA.",
+      benefits: "100% tuition covered, flexible online schedule, and a dedicated career coach.",
+      applicationProcessDescription: "Complete your profile, pass the eligibility check, upload required documents, and submit for review by our admissions team.",
+      tuitionAmount: 400000000,
+      applicationFeeAmount: 3000000,
+      scholarshipPercentage: 100,
+      serviceFeeAmount: 3000000,
+      languageRequirement: "IELTS 6.5 or equivalent",
+      deadline: new Date("2027-06-01"),
+      intake: "Fall 2027",
+      estimatedProcessingDays: 21,
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
+  });
+  await prisma.eligibilityRule.createMany({
+    data: [
+      { opportunityId: auroraFellowship.id, field: "qualificationLevel", operator: "GREATER_THAN_OR_EQUAL", value: "BACHELOR", label: "Bachelor's degree required", required: true },
+      { opportunityId: auroraFellowship.id, field: "gpa", operator: "GREATER_THAN_OR_EQUAL", value: "3.0", label: "Minimum GPA of 3.0 (or equivalent)", required: true },
+    ],
+  });
+  await prisma.documentRequirement.createMany({
+    data: [
+      { opportunityId: auroraFellowship.id, documentType: "PASSPORT", required: true, conditional: false },
+      { opportunityId: auroraFellowship.id, documentType: "DEGREE_CERTIFICATE", required: true, conditional: false },
+      { opportunityId: auroraFellowship.id, documentType: "TRANSCRIPT", required: true, conditional: false },
+      { opportunityId: auroraFellowship.id, documentType: "CV", required: true, conditional: false },
+      { opportunityId: auroraFellowship.id, documentType: "ENGLISH_TEST", required: false, conditional: true, conditionDescription: "Required unless your degree was taught in English" },
+    ],
+  });
+  await prisma.commissionRule.create({
+    data: {
+      partnerId: auroraPartner.id,
+      triggerEvent: "APPLICATION_SUBMITTED",
+      amountType: "FIXED",
+      fixedAmount: 1000000, // NGN 10,000
+      agentSharePercentage: 0,
     },
   });
 

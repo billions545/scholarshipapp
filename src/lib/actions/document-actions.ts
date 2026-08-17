@@ -13,7 +13,7 @@ export async function uploadDocumentAction(applicationId: string, formData: Form
   const application = await prisma.application.findUniqueOrThrow({ where: { id: applicationId } });
   if (application.studentId !== profile.id) throw new Error("Not your application.");
   if (!DOCUMENT_PHASE_STATUSES.includes(application.status)) {
-    throw new Error("Documents can't be uploaded until the administration fee is paid.");
+    throw new Error("Documents can't be uploaded at this stage of the application.");
   }
 
   const file = formData.get("file");

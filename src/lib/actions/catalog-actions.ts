@@ -25,6 +25,11 @@ function optNum(formData: FormData, key: string): number | null {
   const v = str(formData, key);
   return v.length ? Number(v) : null;
 }
+// Admin enters whole Naira amounts; money is stored in minor units (kobo).
+function optNaira(formData: FormData, key: string): number | null {
+  const v = str(formData, key);
+  return v.length ? Math.round(Number(v) * 100) : null;
+}
 
 export async function createPartnerAction(formData: FormData) {
   await assertCanManageCatalog();
@@ -81,11 +86,11 @@ export async function createOpportunityAction(formData: FormData) {
     description: optStr(formData, "description"),
     benefits: optStr(formData, "benefits"),
     applicationProcessDescription: optStr(formData, "applicationProcessDescription"),
-    tuitionAmount: optNum(formData, "tuitionAmount"),
-    applicationFeeAmount: optNum(formData, "applicationFeeAmount"),
-    scholarshipAmount: optNum(formData, "scholarshipAmount"),
+    tuitionAmount: optNaira(formData, "tuitionAmount"),
+    applicationFeeAmount: optNaira(formData, "applicationFeeAmount"),
+    scholarshipAmount: optNaira(formData, "scholarshipAmount"),
     scholarshipPercentage: optNum(formData, "scholarshipPercentage"),
-    serviceFeeAmount: optNum(formData, "serviceFeeAmount"),
+    serviceFeeAmount: optNaira(formData, "serviceFeeAmount"),
     languageRequirement: optStr(formData, "languageRequirement"),
     deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     intake: optStr(formData, "intake"),
@@ -107,11 +112,11 @@ export async function updateOpportunityAction(id: string, formData: FormData) {
     description: optStr(formData, "description"),
     benefits: optStr(formData, "benefits"),
     applicationProcessDescription: optStr(formData, "applicationProcessDescription"),
-    tuitionAmount: optNum(formData, "tuitionAmount"),
-    applicationFeeAmount: optNum(formData, "applicationFeeAmount"),
-    scholarshipAmount: optNum(formData, "scholarshipAmount"),
+    tuitionAmount: optNaira(formData, "tuitionAmount"),
+    applicationFeeAmount: optNaira(formData, "applicationFeeAmount"),
+    scholarshipAmount: optNaira(formData, "scholarshipAmount"),
     scholarshipPercentage: optNum(formData, "scholarshipPercentage"),
-    serviceFeeAmount: optNum(formData, "serviceFeeAmount"),
+    serviceFeeAmount: optNaira(formData, "serviceFeeAmount"),
     languageRequirement: optStr(formData, "languageRequirement"),
     deadline: deadlineRaw ? new Date(deadlineRaw) : null,
     intake: optStr(formData, "intake"),

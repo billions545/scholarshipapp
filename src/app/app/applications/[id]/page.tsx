@@ -6,6 +6,7 @@ import { uploadDocumentAction } from "@/lib/actions/document-actions";
 import { submitApplicationAction, addStudentMessageAction } from "@/lib/actions/application-actions";
 import { payNowAction } from "@/lib/actions/payment-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { formatMoney } from "@/lib/money";
 import {
@@ -38,7 +39,6 @@ export default async function StudentApplicationDetailPage({ params }: { params:
   const eligibility = application.eligibilitySnapshot ? JSON.parse(application.eligibilitySnapshot) : null;
   const boundUpload = uploadDocumentAction.bind(null, application.id);
   const outstandingInvoice = application.invoices.find((inv) => inv.status === "UNPAID");
-  const documentsUnlocked = !["DRAFT", "PAYMENT_REQUIRED", "PAYMENT_CONFIRMED"].includes(application.status);
 
   return (
     <div>
@@ -59,16 +59,14 @@ export default async function StudentApplicationDetailPage({ params }: { params:
         <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4">
           <div>
             <p className="text-sm font-medium text-amber-900">
-              Pay the administration fee to unlock your document checklist.
+              Your documents are approved — pay the administration fee to finish your application.
             </p>
             <p className="mt-1 text-sm text-amber-800">
               {outstandingInvoice.description} — {formatMoney(outstandingInvoice.amount, outstandingInvoice.currency)}
             </p>
           </div>
           <form action={payNowAction.bind(null, application.id)}>
-            <button type="submit" className={ui.btnPrimary}>
-              Pay now
-            </button>
+            <SubmitButton pendingText="Redirecting...">Pay now</SubmitButton>
           </form>
         </div>
       )}
@@ -91,9 +89,7 @@ export default async function StudentApplicationDetailPage({ params }: { params:
         <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-sm text-emerald-800">All documents are approved. You&apos;re ready to submit!</p>
           <form action={submitApplicationAction.bind(null, application.id)}>
-            <button type="submit" className={ui.btnPrimary}>
-              Submit application
-            </button>
+            <SubmitButton pendingText="Submitting...">Submit application</SubmitButton>
           </form>
         </div>
       )}
@@ -124,9 +120,6 @@ export default async function StudentApplicationDetailPage({ params }: { params:
 
           <section>
             <h2 className={ui.sectionHeading}>Documents</h2>
-            {!documentsUnlocked ? (
-              <p className={`${ui.muted} mt-3`}>Complete your payment above to unlock the document checklist.</p>
-            ) : (
             <div className="mt-3 flex flex-col gap-4">
               {application.opportunity.documentRequirements.map((dr) => {
                 const doc = application.documents.find((d) => d.documentType === dr.documentType);
@@ -171,15 +164,14 @@ export default async function StudentApplicationDetailPage({ params }: { params:
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                         className="text-xs text-slate-600"
                       />
-                      <button type="submit" className={ui.btnGhost}>
+                      <SubmitButton variant="ghost" pendingText="Uploading...">
                         {current ? "Upload new version" : "Upload"}
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 );
               })}
             </div>
-            )}
           </section>
 
           <section>
@@ -198,9 +190,7 @@ export default async function StudentApplicationDetailPage({ params }: { params:
             </div>
             <form action={addStudentMessageAction.bind(null, application.id)} className="mt-3 flex gap-2">
               <input className={ui.input} name="content" placeholder="Message your adviser..." required />
-              <button type="submit" className={ui.btnSecondary}>
-                Send
-              </button>
+              <SubmitButton variant="secondary" pendingText="Sending...">Send</SubmitButton>
             </form>
           </section>
         </div>

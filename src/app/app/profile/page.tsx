@@ -8,6 +8,7 @@ import {
   removeWorkExperienceAction,
 } from "@/lib/actions/student-actions";
 import { ui } from "@/lib/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { DEGREE_LEVELS, labelize } from "@/lib/enums";
 
 function fmtDate(d: Date | null): string {
@@ -110,9 +111,7 @@ export default async function ProfilePage() {
           </label>
 
           <div className="sm:col-span-2">
-            <button type="submit" className={ui.btnPrimary}>
-              Save profile
-            </button>
+            <SubmitButton pendingText="Saving...">Save profile</SubmitButton>
           </div>
         </form>
       </section>
@@ -131,9 +130,9 @@ export default async function ProfilePage() {
                 </p>
               </div>
               <form action={removeAcademicRecordAction.bind(null, rec.id)}>
-                <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                <SubmitButton variant="custom" pendingText="Removing..." className="text-xs font-medium text-red-600 hover:text-red-700">
                   Remove
-                </button>
+                </SubmitButton>
               </form>
             </div>
           ))}
@@ -180,9 +179,7 @@ export default async function ProfilePage() {
             <input className={ui.input} name="classDivision" placeholder="First Class" />
           </div>
           <div className="sm:col-span-2">
-            <button type="submit" className={ui.btnSecondary}>
-              Add academic record
-            </button>
+            <SubmitButton variant="secondary" pendingText="Adding...">Add academic record</SubmitButton>
           </div>
         </form>
       </section>
@@ -199,9 +196,9 @@ export default async function ProfilePage() {
                 <p className="text-xs text-slate-500">{w.industry}</p>
               </div>
               <form action={removeWorkExperienceAction.bind(null, w.id)}>
-                <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                <SubmitButton variant="custom" pendingText="Removing..." className="text-xs font-medium text-red-600 hover:text-red-700">
                   Remove
-                </button>
+                </SubmitButton>
               </form>
             </div>
           ))}
@@ -238,9 +235,7 @@ export default async function ProfilePage() {
             <textarea className={ui.input} name="description" rows={2} />
           </div>
           <div className="sm:col-span-2">
-            <button type="submit" className={ui.btnSecondary}>
-              Add work experience
-            </button>
+            <SubmitButton variant="secondary" pendingText="Adding...">Add work experience</SubmitButton>
           </div>
         </form>
       </section>

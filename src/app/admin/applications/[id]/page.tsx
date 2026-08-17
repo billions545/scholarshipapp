@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/application-actions";
 import { reviewDocumentAction } from "@/lib/actions/document-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { availableStaffTransitions } from "@/lib/application-workflow";
 import { requireStaff } from "@/lib/session";
@@ -89,15 +90,13 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
                       ))}
                     </select>
                   </div>
-                  <button type="submit" className={ui.btnSecondary} disabled={nextStatuses.length === 0}>
+                  <SubmitButton variant="secondary" disabled={nextStatuses.length === 0} pendingText="Updating...">
                     Update
-                  </button>
+                  </SubmitButton>
                 </form>
                 {canSubmit && application.status === "READY_FOR_SUBMISSION" && (
                   <form action={staffSubmitApplicationAction.bind(null, application.id)}>
-                    <button type="submit" className={ui.btnPrimary}>
-                      Submit on behalf of student
-                    </button>
+                    <SubmitButton pendingText="Submitting...">Submit on behalf of student</SubmitButton>
                   </form>
                 )}
               </div>
@@ -117,9 +116,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
                       </option>
                     ))}
                   </select>
-                  <button type="submit" className={ui.btnSecondary}>
-                    Save
-                  </button>
+                  <SubmitButton variant="secondary" pendingText="Saving...">Save</SubmitButton>
                 </form>
               </div>
             )}
@@ -178,15 +175,20 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
                         {canReviewDocuments && (
                           <form action={reviewDocumentAction.bind(null, application.id, current.id)} className="flex flex-wrap items-center gap-2">
                             <input className={`${ui.input} w-64`} name="comment" placeholder="Comment (required for rejection/correction)" />
-                            <button type="submit" name="decision" value="APPROVED" className={ui.btnPrimary}>
+                            <SubmitButton name="decision" value="APPROVED" pendingText="Approving...">
                               Approve
-                            </button>
-                            <button type="submit" name="decision" value="CORRECTION_REQUIRED" className={ui.btnSecondary}>
+                            </SubmitButton>
+                            <SubmitButton
+                              variant="secondary"
+                              name="decision"
+                              value="CORRECTION_REQUIRED"
+                              pendingText="Sending back..."
+                            >
                               Request correction
-                            </button>
-                            <button type="submit" name="decision" value="REJECTED" className={ui.btnDanger}>
+                            </SubmitButton>
+                            <SubmitButton variant="danger" name="decision" value="REJECTED" pendingText="Rejecting...">
                               Reject
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                       </div>
@@ -215,9 +217,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             </div>
             <form action={boundInternalNote} className="mt-3 flex gap-2">
               <input className={ui.input} name="content" placeholder="Add an internal note..." required />
-              <button type="submit" className={ui.btnSecondary}>
-                Add note
-              </button>
+              <SubmitButton variant="secondary" pendingText="Adding...">Add note</SubmitButton>
             </form>
           </section>
 
@@ -238,9 +238,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             </div>
             <form action={boundMessage} className="mt-3 flex gap-2">
               <input className={ui.input} name="content" placeholder="Message the student..." required />
-              <button type="submit" className={ui.btnSecondary}>
-                Send
-              </button>
+              <SubmitButton variant="secondary" pendingText="Sending...">Send</SubmitButton>
             </form>
           </section>
         </div>

@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/catalog-actions";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import {
   ELIGIBILITY_OPERATORS,
@@ -59,16 +60,18 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           <StatusBadge status={opportunity.status} />
           {opportunity.status !== "PUBLISHED" && (
             <form action={setOpportunityStatusAction.bind(null, opportunity.id, "PUBLISHED")}>
-              <button type="submit" className={ui.btnPrimary} disabled={!canPublish} title={!canPublish ? "Add at least one eligibility rule and one document requirement first" : undefined}>
+              <SubmitButton
+                disabled={!canPublish}
+                title={!canPublish ? "Add at least one eligibility rule and one document requirement first" : undefined}
+                pendingText="Publishing..."
+              >
                 Publish
-              </button>
+              </SubmitButton>
             </form>
           )}
           {opportunity.status === "PUBLISHED" && (
             <form action={setOpportunityStatusAction.bind(null, opportunity.id, "ARCHIVED")}>
-              <button type="submit" className={ui.btnSecondary}>
-                Unpublish
-              </button>
+              <SubmitButton variant="secondary" pendingText="Unpublishing...">Unpublish</SubmitButton>
             </form>
           )}
         </div>
@@ -110,9 +113,9 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                     </p>
                   </div>
                   <form action={removeEligibilityRuleAction.bind(null, r.id, opportunity.id)}>
-                    <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                    <SubmitButton variant="custom" pendingText="Removing..." className="text-xs font-medium text-red-600 hover:text-red-700">
                       Remove
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               ))}
@@ -157,9 +160,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 <input type="checkbox" name="required" defaultChecked className="rounded border-slate-300" />
                 Required (failing this makes the applicant NOT ELIGIBLE)
               </label>
-              <button type="submit" className={`${ui.btnSecondary} self-start`}>
-                Add rule
-              </button>
+              <SubmitButton variant="secondary" className="self-start" pendingText="Adding...">Add rule</SubmitButton>
             </form>
           </div>
 
@@ -176,9 +177,9 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                     </p>
                   </div>
                   <form action={removeDocumentRequirementAction.bind(null, dr.id, opportunity.id)}>
-                    <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                    <SubmitButton variant="custom" pendingText="Removing..." className="text-xs font-medium text-red-600 hover:text-red-700">
                       Remove
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               ))}
@@ -213,9 +214,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 <label className={ui.label}>Condition description (optional)</label>
                 <input className={ui.input} name="conditionDescription" placeholder="If IELTS unavailable" />
               </div>
-              <button type="submit" className={`${ui.btnSecondary} self-start`}>
-                Add requirement
-              </button>
+              <SubmitButton variant="secondary" className="self-start" pendingText="Adding...">Add requirement</SubmitButton>
             </form>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { registerAction } from "@/lib/actions/auth-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 
 export default async function RegisterPage({
@@ -80,9 +81,7 @@ export default async function RegisterPage({
             <input className={ui.input} id="referralCode" name="referralCode" />
           </div>
         )}
-        <button type="submit" className={ui.btnPrimary}>
-          Create account
-        </button>
+        <SubmitButton pendingText="Creating account...">Create account</SubmitButton>
       </form>
 
       <p className={`${ui.muted} mt-4 text-center`}>

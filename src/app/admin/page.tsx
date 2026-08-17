@@ -14,7 +14,21 @@ export default async function AdminDashboardPage() {
   ] = await Promise.all([
     prisma.studentProfile.count(),
     prisma.application.count({ where: { status: { notIn: ["ENROLLED", "REJECTED", "WITHDRAWN", "CANCELLED"] } } }),
-    prisma.application.count({ where: { status: { notIn: ["DRAFT", "DOCUMENTS_REQUIRED", "DOCUMENT_REVIEW", "CORRECTION_REQUIRED", "READY_FOR_SUBMISSION"] } } }),
+    prisma.application.count({
+      where: {
+        status: {
+          notIn: [
+            "DRAFT",
+            "DOCUMENTS_REQUIRED",
+            "DOCUMENT_REVIEW",
+            "CORRECTION_REQUIRED",
+            "PAYMENT_REQUIRED",
+            "PAYMENT_CONFIRMED",
+            "READY_FOR_SUBMISSION",
+          ],
+        },
+      },
+    }),
     prisma.application.count({ where: { status: { in: ["OFFER_RECEIVED", "OFFER_ACCEPTED", "ENROLMENT_PENDING", "ENROLLED"] } } }),
     prisma.application.count({ where: { status: "ENROLLED" } }),
     prisma.application.findMany({

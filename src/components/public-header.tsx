@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
+import { Logo } from "@/components/logo";
 import { ui } from "@/lib/ui";
 
 export async function PublicHeader() {
@@ -8,9 +9,9 @@ export async function PublicHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="shrink-0 text-lg font-bold text-indigo-700">
-          Edu Bridge Point
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+        <Link href="/" className="shrink-0">
+          <Logo className="h-14 w-auto sm:h-16" />
         </Link>
         <nav className="flex items-center gap-3 text-sm font-medium text-slate-600 sm:gap-6">
           <Link href="/opportunities" className="hidden hover:text-slate-900 sm:inline">

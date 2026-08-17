@@ -6,6 +6,7 @@ import { evaluateEligibility } from "@/lib/eligibility";
 import { getStudentFacts } from "@/lib/services/student-service";
 import { applyToOpportunityAction } from "@/lib/actions/application-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { labelize } from "@/lib/enums";
 import { formatMoney as money } from "@/lib/money";
@@ -151,7 +152,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               )}
               {money(opportunity.serviceFeeAmount, opportunity.serviceFeeCurrency) && (
                 <div>
-                  <dt className="text-slate-400">Agency service fee</dt>
+                  <dt className="text-slate-400">Administration fee</dt>
                   <dd className="font-medium text-slate-900">{money(opportunity.serviceFeeAmount, opportunity.serviceFeeCurrency)}</dd>
                 </div>
               )}
@@ -194,9 +195,9 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                   </Link>
                 ) : (
                   <form action={applyToOpportunityAction.bind(null, opportunity.id)}>
-                    <button type="submit" className={`${ui.btnPrimary} mt-4 w-full`}>
+                    <SubmitButton className="mt-4 w-full" pendingText="Starting application...">
                       Apply now
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
                 {report.result === "NOT_ELIGIBLE" && !existingApplicationId && (

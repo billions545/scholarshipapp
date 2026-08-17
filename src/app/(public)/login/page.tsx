@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 
 export default async function LoginPage({
@@ -33,9 +34,7 @@ export default async function LoginPage({
           </label>
           <input className={ui.input} id="password" name="password" type="password" required />
         </div>
-        <button type="submit" className={ui.btnPrimary}>
-          Log in
-        </button>
+        <SubmitButton pendingText="Logging in...">Log in</SubmitButton>
       </form>
 
       <p className={`${ui.muted} mt-4 text-center`}>

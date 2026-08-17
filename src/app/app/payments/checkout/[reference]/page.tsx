@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireStudent } from "@/lib/session";
 import { simulatePaymentOutcomeAction } from "@/lib/actions/payment-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { formatMoney } from "@/lib/money";
 
@@ -44,14 +45,14 @@ export default async function MockCheckoutPage({ params }: { params: Promise<{ r
           <form
             action={simulatePaymentOutcomeAction.bind(null, reference, payment.applicationId ?? "", "SUCCESSFUL")}
           >
-            <button type="submit" className={`${ui.btnPrimary} w-full`}>
+            <SubmitButton className="w-full" pendingText="Processing...">
               Simulate successful payment
-            </button>
+            </SubmitButton>
           </form>
           <form action={simulatePaymentOutcomeAction.bind(null, reference, payment.applicationId ?? "", "FAILED")}>
-            <button type="submit" className={`${ui.btnSecondary} w-full`}>
+            <SubmitButton variant="secondary" className="w-full" pendingText="Processing...">
               Simulate failed payment
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </div>

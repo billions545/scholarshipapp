@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createProgrammeAction } from "@/lib/actions/catalog-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { DEGREE_LEVELS, STUDY_MODES, labelize } from "@/lib/enums";
 
@@ -82,9 +83,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
             <label className={ui.label}>Duration (months)</label>
             <input className={ui.input} name="durationMonths" type="number" min={1} />
           </div>
-          <button type="submit" className={ui.btnPrimary}>
-            Add programme
-          </button>
+          <SubmitButton pendingText="Adding...">Add programme</SubmitButton>
         </form>
       </div>
     </div>

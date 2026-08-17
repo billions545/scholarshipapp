@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { staffRequestRefundAction, decideRefundAction } from "@/lib/actions/payment-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { formatMoney } from "@/lib/money";
 import { labelize } from "@/lib/enums";
@@ -54,14 +55,10 @@ export default async function AdminPaymentsPage() {
                 </div>
                 <div className="flex gap-2">
                   <form action={decideRefundAction.bind(null, r.id, "REFUNDED")}>
-                    <button type="submit" className={ui.btnPrimary}>
-                      Mark refunded
-                    </button>
+                    <SubmitButton pendingText="Marking...">Mark refunded</SubmitButton>
                   </form>
                   <form action={decideRefundAction.bind(null, r.id, "REFUND_REJECTED")}>
-                    <button type="submit" className={ui.btnSecondary}>
-                      Reject
-                    </button>
+                    <SubmitButton variant="secondary" pendingText="Rejecting...">Reject</SubmitButton>
                   </form>
                 </div>
               </div>
@@ -106,9 +103,9 @@ export default async function AdminPaymentsPage() {
                           name="reason"
                           placeholder="Reason"
                         />
-                        <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                        <SubmitButton variant="custom" pendingText="Requesting..." className="text-xs font-medium text-red-600 hover:text-red-700">
                           Request refund
-                        </button>
+                        </SubmitButton>
                       </form>
                     )}
                     {p.refunds.length > 0 && <StatusBadge status={p.refunds[0].status} />}

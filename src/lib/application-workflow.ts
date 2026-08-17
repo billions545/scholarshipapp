@@ -2,16 +2,17 @@ import type { ApplicationStatus } from "@/lib/enums";
 
 // Application state machine (PRD §25, §119-120). Terminal exits (REJECTED /
 // WITHDRAWN / CANCELLED) are reachable from most pre-enrolment states rather
-// than enumerated on every node below. DRAFT skips straight to
-// DOCUMENTS_REQUIRED when the opportunity has no service fee configured;
-// otherwise it routes through PAYMENT_REQUIRED / PAYMENT_CONFIRMED first.
+// than enumerated on every node below. Documents (and the eligibility check
+// already run at creation) come first; payment is only asked for once every
+// required document is approved, and is skipped entirely when the
+// opportunity has no service fee configured.
 export const FORWARD_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
-  DRAFT: ["PAYMENT_REQUIRED", "DOCUMENTS_REQUIRED"],
-  PAYMENT_REQUIRED: ["PAYMENT_CONFIRMED"],
-  PAYMENT_CONFIRMED: ["DOCUMENTS_REQUIRED"],
+  DRAFT: ["DOCUMENTS_REQUIRED"],
   DOCUMENTS_REQUIRED: ["DOCUMENT_REVIEW"],
-  DOCUMENT_REVIEW: ["CORRECTION_REQUIRED", "READY_FOR_SUBMISSION"],
+  DOCUMENT_REVIEW: ["CORRECTION_REQUIRED", "PAYMENT_REQUIRED", "READY_FOR_SUBMISSION"],
   CORRECTION_REQUIRED: ["DOCUMENT_REVIEW"],
+  PAYMENT_REQUIRED: ["PAYMENT_CONFIRMED"],
+  PAYMENT_CONFIRMED: ["READY_FOR_SUBMISSION"],
   READY_FOR_SUBMISSION: ["SUBMITTED"],
   SUBMITTED: ["PARTNER_REVIEW"],
   PARTNER_REVIEW: ["ADMISSION_DECISION"],
@@ -49,18 +50,21 @@ export function canTransition(from: ApplicationStatus, to: ApplicationStatus): b
 }
 
 // Recomputes DOCUMENTS_REQUIRED / DOCUMENT_REVIEW / CORRECTION_REQUIRED /
-// READY_FOR_SUBMISSION purely from the current document checklist state.
-// Only meaningful while the application hasn't been submitted yet — after
-// that, status changes are staff-driven (partner review, decisions, etc).
+// DOCUMENTS_APPROVED purely from the current document checklist state. Only
+// meaningful while the application hasn't been submitted yet — after that,
+// status changes are staff-driven (partner review, decisions, etc).
+// DOCUMENTS_APPROVED is a signal, not an ApplicationStatus itself: the caller
+// resolves it to PAYMENT_REQUIRED (fee-bearing opportunity) or
+// READY_FOR_SUBMISSION (no fee) — see recomputeDocumentDrivenStatus.
 export function deriveDocumentStatus(
   requiredTypes: string[],
   latestStatusByType: Map<string, string>,
-): "DOCUMENTS_REQUIRED" | "DOCUMENT_REVIEW" | "CORRECTION_REQUIRED" | "READY_FOR_SUBMISSION" {
+): "DOCUMENTS_REQUIRED" | "DOCUMENT_REVIEW" | "CORRECTION_REQUIRED" | "DOCUMENTS_APPROVED" {
   const missing = requiredTypes.some((t) => !latestStatusByType.has(t));
   if (missing) return "DOCUMENTS_REQUIRED";
 
   const statuses = requiredTypes.map((t) => latestStatusByType.get(t));
   if (statuses.some((s) => s === "REJECTED" || s === "CORRECTION_REQUIRED")) return "CORRECTION_REQUIRED";
-  if (statuses.every((s) => s === "APPROVED")) return "READY_FOR_SUBMISSION";
+  if (statuses.every((s) => s === "APPROVED")) return "DOCUMENTS_APPROVED";
   return "DOCUMENT_REVIEW";
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/actions/auth-actions";
-import { ui } from "@/lib/ui";
+import { SubmitButton } from "@/components/submit-button";
+import { LogoMark } from "@/components/logo";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard" },
@@ -18,7 +19,8 @@ export function AdminHeader({ name, role }: { name: string; role: string }) {
     <header className="border-b border-slate-800 bg-slate-900">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-8">
-          <Link href="/admin" className="text-lg font-bold text-white">
+          <Link href="/admin" className="flex items-center gap-2 text-lg font-bold text-white">
+            <LogoMark className="h-8 w-8" />
             Edu Bridge Point <span className="text-indigo-400">Admin</span>
           </Link>
           <nav className="flex items-center gap-5 text-sm font-medium text-slate-300">
@@ -34,9 +36,13 @@ export function AdminHeader({ name, role }: { name: string; role: string }) {
             {name} <span className="text-slate-500">- {role}</span>
           </span>
           <form action={logoutAction}>
-            <button type="submit" className="rounded-lg px-3 py-1.5 font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+            <SubmitButton
+              variant="custom"
+              pendingText="Signing out..."
+              className="rounded-lg px-3 py-1.5 font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
               Sign out
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </div>

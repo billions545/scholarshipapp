@@ -48,14 +48,13 @@ export async function createApplication(studentProfileId: string, opportunityId:
   const report = evaluateEligibility(opportunity.eligibilityRules, facts);
 
   const applicationNumber = await generateApplicationNumber();
-  const requiresPayment = !!opportunity.serviceFeeAmount && opportunity.serviceFeeAmount > 0;
 
   const application = await prisma.application.create({
     data: {
       applicationNumber,
       studentId: studentProfileId,
       opportunityId,
-      status: requiresPayment ? "PAYMENT_REQUIRED" : "DOCUMENTS_REQUIRED",
+      status: "DOCUMENTS_REQUIRED",
       eligibilityResult: report.result,
       eligibilitySnapshot: JSON.stringify(report),
       tasks: {
@@ -75,31 +74,10 @@ export async function createApplication(studentProfileId: string, opportunityId:
     metadata: { result: report.result },
   });
 
-  if (requiresPayment) {
-    const invoiceNumber = await generateInvoiceNumber();
-    await prisma.invoice.create({
-      data: {
-        invoiceNumber,
-        studentId: studentProfileId,
-        applicationId: application.id,
-        description: `Administration fee — ${opportunity.title}`,
-        type: "ADMINISTRATION_FEE",
-        amount: opportunity.serviceFeeAmount!,
-        currency: opportunity.serviceFeeCurrency ?? "NGN",
-        status: "UNPAID",
-      },
-    });
-    await logEvent(
-      application.id,
-      "STATUS_CHANGED",
-      `Administration fee of ${formatMoney(opportunity.serviceFeeAmount, opportunity.serviceFeeCurrency)} is due before documents can be submitted.`,
-    );
-  }
-
   return application;
 }
 
-// Advances PAYMENT_REQUIRED -> PAYMENT_CONFIRMED -> DOCUMENTS_REQUIRED once
+// Advances PAYMENT_REQUIRED -> PAYMENT_CONFIRMED -> READY_FOR_SUBMISSION once
 // a payment succeeds. No-ops if the application has already moved on
 // (keeps this safe to call from an idempotent webhook handler).
 export async function advanceApplicationAfterPayment(applicationId: string) {
@@ -109,8 +87,8 @@ export async function advanceApplicationAfterPayment(applicationId: string) {
   await prisma.application.update({ where: { id: applicationId }, data: { status: "PAYMENT_CONFIRMED" } });
   await logEvent(applicationId, "STATUS_CHANGED", "Status changed to PAYMENT_CONFIRMED.");
 
-  await prisma.application.update({ where: { id: applicationId }, data: { status: "DOCUMENTS_REQUIRED" } });
-  await logEvent(applicationId, "STATUS_CHANGED", "Status changed to DOCUMENTS_REQUIRED.");
+  await prisma.application.update({ where: { id: applicationId }, data: { status: "READY_FOR_SUBMISSION" } });
+  await logEvent(applicationId, "STATUS_CHANGED", "Status changed to READY_FOR_SUBMISSION.");
 }
 
 // Recomputes the pre-submission status purely from the document checklist
@@ -143,12 +121,37 @@ export async function recomputeDocumentDrivenStatus(applicationId: string) {
     if (latest && latest.status !== "SUPERSEDED") latestStatusByType.set(doc.documentType, latest.status);
   }
 
-  const nextStatus = deriveDocumentStatus(requiredTypes, latestStatusByType);
+  const docStatus = deriveDocumentStatus(requiredTypes, latestStatusByType);
+  const requiresPayment = !!application.opportunity.serviceFeeAmount && application.opportunity.serviceFeeAmount > 0;
+  const nextStatus: ApplicationStatus =
+    docStatus === "DOCUMENTS_APPROVED" ? (requiresPayment ? "PAYMENT_REQUIRED" : "READY_FOR_SUBMISSION") : docStatus;
+
   if (nextStatus !== application.status) {
     await prisma.application.update({ where: { id: applicationId }, data: { status: nextStatus } });
     await logEvent(applicationId, "STATUS_CHANGED", `Status changed to ${nextStatus}.`, {
       metadata: { from: application.status, to: nextStatus },
     });
+
+    if (nextStatus === "PAYMENT_REQUIRED") {
+      const invoiceNumber = await generateInvoiceNumber();
+      await prisma.invoice.create({
+        data: {
+          invoiceNumber,
+          studentId: application.studentId,
+          applicationId: application.id,
+          description: `Administration fee — ${application.opportunity.title}`,
+          type: "ADMINISTRATION_FEE",
+          amount: application.opportunity.serviceFeeAmount!,
+          currency: application.opportunity.serviceFeeCurrency ?? "NGN",
+          status: "UNPAID",
+        },
+      });
+      await logEvent(
+        applicationId,
+        "STATUS_CHANGED",
+        `Administration fee of ${formatMoney(application.opportunity.serviceFeeAmount, application.opportunity.serviceFeeCurrency)} is due.`,
+      );
+    }
   }
   return application;
 }

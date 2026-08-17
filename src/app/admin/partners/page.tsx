@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createPartnerAction } from "@/lib/actions/catalog-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { PARTNER_TYPES, labelize } from "@/lib/enums";
 
@@ -65,9 +66,7 @@ export default async function PartnersPage() {
             <label className={ui.label}>Contact email</label>
             <input className={ui.input} name="contactEmail" type="email" />
           </div>
-          <button type="submit" className={ui.btnPrimary}>
-            Add partner
-          </button>
+          <SubmitButton pendingText="Adding...">Add partner</SubmitButton>
         </form>
       </div>
     </div>

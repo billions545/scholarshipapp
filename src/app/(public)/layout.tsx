@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
+import { LogoMark } from "@/components/logo";
 
 const FOOTER_LINKS = [
   { href: "/opportunities", label: "Browse Opportunities" },
@@ -17,7 +18,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex flex-col items-start justify-between gap-8 sm:flex-row">
             <div>
-              <p className="text-lg font-bold text-white">Edu Bridge Point</p>
+              <p className="flex items-center gap-2 text-lg font-bold text-white">
+                <LogoMark className="h-8 w-8" />
+                Edu Bridge Point
+              </p>
               <p className="mt-2 max-w-sm text-sm text-slate-400">
                 The guided way to discover and apply for scholarships and international education
                 opportunities.

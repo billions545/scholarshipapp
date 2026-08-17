@@ -5,6 +5,7 @@ import { createUniversityAction } from "@/lib/actions/catalog-actions";
 import { createCommissionRuleAction } from "@/lib/actions/commission-actions";
 import { requireStaff } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { COMMISSION_TRIGGER_EVENTS, COMMISSION_PERCENTAGE_BASES, labelize } from "@/lib/enums";
 
@@ -133,9 +134,9 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
                   ))}
                 </select>
               </div>
-              <button type="submit" className={`${ui.btnSecondary} self-start`}>
+              <SubmitButton variant="secondary" className="self-start" pendingText="Adding...">
                 Add commission rule
-              </button>
+              </SubmitButton>
             </form>
           </>
         )}
@@ -161,9 +162,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             <label className={ui.label}>Website</label>
             <input className={ui.input} name="website" />
           </div>
-          <button type="submit" className={ui.btnPrimary}>
-            Add university
-          </button>
+          <SubmitButton pendingText="Adding...">Add university</SubmitButton>
         </form>
       </div>
     </div>

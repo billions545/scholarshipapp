@@ -7,6 +7,7 @@ import type { ApplicationStatus } from "@/lib/enums";
 const COLUMNS: { title: string; statuses: ApplicationStatus[] }[] = [
   { title: "New", statuses: ["DRAFT", "DOCUMENTS_REQUIRED"] },
   { title: "Documents", statuses: ["DOCUMENT_REVIEW", "CORRECTION_REQUIRED"] },
+  { title: "Payment", statuses: ["PAYMENT_REQUIRED", "PAYMENT_CONFIRMED"] },
   { title: "Ready", statuses: ["READY_FOR_SUBMISSION"] },
   { title: "Submitted", statuses: ["SUBMITTED"] },
   { title: "Partner review", statuses: ["PARTNER_REVIEW"] },

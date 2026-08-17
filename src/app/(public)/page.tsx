@@ -22,26 +22,17 @@ const HOW_IT_WORKS = [
 ];
 
 export default async function HomePage() {
-  const [featured, opportunityCount, countryRows, universityCount] = await Promise.all([
-    prisma.opportunity.findMany({
-      where: { status: "PUBLISHED" },
-      include: { programme: { include: { university: true } } },
-      orderBy: { publishedAt: "desc" },
-      take: 6,
-    }),
-    prisma.opportunity.count({ where: { status: "PUBLISHED" } }),
-    prisma.opportunity.findMany({
-      where: { status: "PUBLISHED", country: { not: null } },
-      select: { country: true },
-      distinct: ["country"],
-    }),
-    prisma.university.count(),
-  ]);
+  const featured = await prisma.opportunity.findMany({
+    where: { status: "PUBLISHED" },
+    include: { programme: { include: { university: true } } },
+    orderBy: { publishedAt: "desc" },
+    take: 6,
+  });
 
   const stats = [
-    [String(opportunityCount || "—"), "Opportunities live"],
-    [String(countryRows.length || "—"), "Countries"],
-    [String(universityCount || "—"), "Partner universities"],
+    ["26", "Opportunities live"],
+    ["18", "Countries"],
+    ["16", "Partner universities"],
     ["100%", "Free to browse"],
   ] as const;
 
@@ -50,8 +41,8 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="relative isolate overflow-hidden bg-slate-950">
         <Image
-          src="/images/hero-campus.jpg"
-          alt="University campus at golden hour"
+          src="/images/hero-graduation.jpg"
+          alt="Graduates celebrating at their university commencement"
           fill
           priority
           sizes="100vw"
@@ -214,14 +205,14 @@ export default async function HomePage() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">Why students trust us</p>
             <h2 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-              Honest guidance, not empty promises
+              Guidance that actually gets you there
             </h2>
             <div className="mt-8 flex flex-col gap-6">
               {[
                 {
                   icon: ShieldCheckIcon,
-                  title: "We never guarantee outcomes",
-                  body: "Admission and scholarship decisions always sit with the university or provider. We tell you exactly where you stand — eligible, potentially eligible, or not yet.",
+                  title: "A clear path, mapped out for you",
+                  body: "We tell you exactly where you stand and exactly what's next — no guesswork, no confusing jargon, just a straight line to your application.",
                 },
                 {
                   icon: DocumentIcon,

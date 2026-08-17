@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { createAgentAction } from "@/lib/actions/agent-actions";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { formatMoney } from "@/lib/money";
 
@@ -82,9 +83,7 @@ export default async function AdminAgentsPage({
               <label className={ui.label}>Temporary password</label>
               <input className={ui.input} name="password" type="password" minLength={8} required />
             </div>
-            <button type="submit" className={ui.btnPrimary}>
-              Create agent
-            </button>
+            <SubmitButton pendingText="Creating...">Create agent</SubmitButton>
             <p className="text-xs text-slate-400">A unique referral code is generated automatically.</p>
           </form>
         </div>

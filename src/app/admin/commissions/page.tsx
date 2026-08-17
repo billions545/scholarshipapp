@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/session";
 import { hasPermission } from "@/lib/rbac";
 import { approveCommissionAction, rejectCommissionAction, markCommissionPaidAction } from "@/lib/actions/commission-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { SubmitButton } from "@/components/submit-button";
 import { ui } from "@/lib/ui";
 import { formatMoney } from "@/lib/money";
 import { labelize } from "@/lib/enums";
@@ -89,22 +90,22 @@ export default async function AdminCommissionsPage() {
                       {c.status === "EXPECTED" && (
                         <>
                           <form action={approveCommissionAction.bind(null, c.id)}>
-                            <button type="submit" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                            <SubmitButton variant="custom" pendingText="Approving..." className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
                               Approve
-                            </button>
+                            </SubmitButton>
                           </form>
                           <form action={rejectCommissionAction.bind(null, c.id)}>
-                            <button type="submit" className="text-xs font-medium text-red-600 hover:text-red-700">
+                            <SubmitButton variant="custom" pendingText="Rejecting..." className="text-xs font-medium text-red-600 hover:text-red-700">
                               Reject
-                            </button>
+                            </SubmitButton>
                           </form>
                         </>
                       )}
                       {c.status === "APPROVED" && (
                         <form action={markCommissionPaidAction.bind(null, c.id)}>
-                          <button type="submit" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+                          <SubmitButton variant="custom" pendingText="Marking..." className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
                             Mark paid
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
                     </div>
